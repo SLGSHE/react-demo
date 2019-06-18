@@ -1,19 +1,37 @@
 import React from "react";
-import { Button, Form, Input, Icon } from 'antd'
+import { Button, Form, Input, Icon, message } from 'antd'
+import { Redirect } from 'react-router-dom'
 
-import logo from './images/logo.png'
+import { reqLogin } from '../../api/index'
+import memeoryUtils from '../../untils/memeoryUtils'
+import { saveUser } from '../../untils/storageUtils'
+import logo from '../../assets/images/logo.png'
 import './login.less'
 
 class Login extends React.Component {
   handleSubmit = (event) => {
     //组件标签是组件的实例
     event.preventDefault()//禁止点击跳转
-    this.props.form.validateFields((err, values) => {
-      if (!err) {
-        console.log('发送ajax请求', values)
+    this.props.form.validateFields(async (err, values) => {
+      if (!err) { //验证成功
+        //发送ajax请求
+        const { username, password } = values
+        const result = await reqLogin(username, password)// {status: 0, data: user对象} | {status: 1, msg: 'xxx'}
+        if (result.status === 0) {//若登录成功
+          const user = result.data //保存数据
+          memeoryUtils.user = user  // 保存在内存中
+          saveUser(user)   // 保存到localStorage文件中
+
+          //跳转到admin中
+          this.props.history.replace('./')
+
+        } else {
+          message.error(result.msg)
+          console.log(message.error(result.msg))
+        }
       }
     })
-    alert('提交')
+
 
   }
 
@@ -35,6 +53,11 @@ class Login extends React.Component {
     const { getFieldDecorator } = this.props.form
     //console.log(this.props.form)
     // console.log(getFieldDecorator, '-------')
+    // 访问login界面, 如果已经登陆, 自动跳转到admin
+    if (memeoryUtils.user._id) {
+      return <Redirect to='/' />
+    }
+
     return (
       <div className="login">
         <header className="login-header">
@@ -46,7 +69,7 @@ class Login extends React.Component {
           <Form onSubmit={this.handleSubmit} className="login-form">
             <Form.Item>
               {
-                getFieldDecorator('userName', {
+                getFieldDecorator('username', {
                   initialValue: '', //初始值为空
                   rules: [
                     { required: true, whitespace: true, message: '请输入用户名' },//必须输入内容
