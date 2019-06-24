@@ -1,14 +1,11 @@
 /* 应用根组件 */
 
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
 
 export default class App extends Component {
-
-  static propTypes = {
-    store: PropTypes.object.isRequired
+  state = {
+    count: 0
   }
-
   constructor(props) {
     super(props)
     this.numberRef = React.createRef()
